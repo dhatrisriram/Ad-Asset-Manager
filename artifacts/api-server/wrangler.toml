@@ -1,0 +1,46 @@
+name = "ad-asset-manager-api"
+type = "service"
+main = "src/index.ts"
+compatibility_date = "2024-11-15"
+compatibility_flags = ["nodejs_compat"]
+
+# Cloudflare D1 Database binding
+[[d1_databases]]
+binding = "DB"
+database_name = "ad-asset-manager"
+database_id = "b9a72311-4c84-45b4-850f-fa6e0ca4d5eb"
+
+# Cloudflare KV namespace bindings
+[[kv_namespaces]]
+binding = "KV_CACHE"
+id = "d1f8429f780b4afd8aca5807727bcd37"
+preview_id = "YOUR_KV_PREVIEW_ID"
+
+# Cloudflare Queues
+[[queues.consumers]]
+queue = "publish-jobs"
+max_batch_size = 10
+max_batch_timeout = 30
+max_retries = 3
+dead_letter_queue = "publish-jobs-dlq"
+
+[[queues.producers]]
+binding = "PUBLISH_QUEUE"
+queue = "publish-jobs"
+
+# Cloudflare R2 bucket for media
+[[r2_buckets]]
+binding = "MEDIA_BUCKET"
+bucket_name = "ad-asset-manager-media"
+preview_bucket_name = "ad-asset-manager-media-preview"
+
+# Environment variables
+[env.production]
+vars = { ENVIRONMENT = "production" }
+
+[env.preview]
+vars = { ENVIRONMENT = "preview" }
+d1_databases = [{binding = "DB", database_name = "ad-asset-manager-preview", database_id = "PREVIEW_DATABASE_ID"}]
+kv_namespaces = [{binding = "KV_CACHE", id = "PREVIEW_KV_ID"}]
+r2_buckets = [{binding = "MEDIA_BUCKET", bucket_name = "ad-asset-manager-media-preview"}]
+

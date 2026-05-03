@@ -1,0 +1,27 @@
+{
+  "name": "@workspace/api-server",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "build": "wrangler build",
+    "deploy": "wrangler deploy",
+    "deploy:preview": "wrangler deploy --env preview",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@cloudflare/workers-types": "^4.20250107.0",
+    "@workspace/api-zod": "workspace:*",
+    "@workspace/db": "workspace:*",
+    "drizzle-orm": "catalog:",
+    "hono": "^4.6.13",
+    "pino": "^9",
+    "pino-http": "^10"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "typescript": "^5",
+    "wrangler": "^3.94.0"
+  }
+}

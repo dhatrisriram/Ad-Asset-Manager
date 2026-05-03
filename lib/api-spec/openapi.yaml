@@ -1,0 +1,789 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: Unified Ads Management SaaS API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+  - name: auth
+  - name: platforms
+  - name: campaigns
+  - name: publish
+  - name: media
+  - name: logs
+  - name: dashboard
+  - name: ai
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HealthStatus" }
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LoginRequest" }
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthResponse" }
+  /auth/me:
+    get:
+      operationId: getCurrentUser
+      tags: [auth]
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Ok" }
+
+  /platforms/catalog:
+    get:
+      operationId: listPlatformCatalog
+      tags: [platforms]
+      description: All supported ad platforms (whether or not connected)
+      responses:
+        "200":
+          description: Catalog
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/PlatformCatalogEntry" }
+
+  /platforms:
+    get:
+      operationId: listPlatforms
+      tags: [platforms]
+      responses:
+        "200":
+          description: Connected platforms
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Platform" }
+    post:
+      operationId: connectPlatform
+      tags: [platforms]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ConnectPlatformRequest" }
+      responses:
+        "200":
+          description: Connected
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Platform" }
+
+  /platforms/{platformId}:
+    delete:
+      operationId: disconnectPlatform
+      tags: [platforms]
+      parameters:
+        - in: path
+          name: platformId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Disconnected
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Ok" }
+
+  /platforms/{platformId}/test:
+    post:
+      operationId: testPlatformConnection
+      tags: [platforms]
+      parameters:
+        - in: path
+          name: platformId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Connection test result
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PlatformTestResult" }
+
+  /campaigns:
+    get:
+      operationId: listCampaigns
+      tags: [campaigns]
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [draft, scheduled, publishing, live, partial, failed, paused]
+      responses:
+        "200":
+          description: Campaigns
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Campaign" }
+    post:
+      operationId: createCampaign
+      tags: [campaigns]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateCampaignRequest" }
+      responses:
+        "200":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Campaign" }
+
+  /campaigns/{campaignId}:
+    get:
+      operationId: getCampaign
+      tags: [campaigns]
+      parameters:
+        - in: path
+          name: campaignId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Campaign detail
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CampaignDetail" }
+    patch:
+      operationId: updateCampaign
+      tags: [campaigns]
+      parameters:
+        - in: path
+          name: campaignId
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateCampaignRequest" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Campaign" }
+    delete:
+      operationId: deleteCampaign
+      tags: [campaigns]
+      parameters:
+        - in: path
+          name: campaignId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Ok" }
+
+  /campaigns/{campaignId}/duplicate:
+    post:
+      operationId: duplicateCampaign
+      tags: [campaigns]
+      parameters:
+        - in: path
+          name: campaignId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Duplicated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Campaign" }
+
+  /publish:
+    post:
+      operationId: publishCampaign
+      tags: [publish]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PublishRequest" }
+      responses:
+        "200":
+          description: Publish jobs queued
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PublishResponse" }
+
+  /publish/{jobId}/retry:
+    post:
+      operationId: retryPublishJob
+      tags: [publish]
+      parameters:
+        - in: path
+          name: jobId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Retried
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PublishJob" }
+
+  /status:
+    get:
+      operationId: getPublishStatus
+      tags: [publish]
+      parameters:
+        - in: query
+          name: campaignId
+          schema: { type: string }
+      responses:
+        "200":
+          description: Publish job status across platforms
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/PublishJob" }
+
+  /media:
+    get:
+      operationId: listMedia
+      tags: [media]
+      responses:
+        "200":
+          description: Media library
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/MediaAsset" }
+    post:
+      operationId: createMedia
+      tags: [media]
+      description: Register a media asset. URL-based upload (would be R2 in production).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateMediaRequest" }
+      responses:
+        "200":
+          description: Media created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MediaAsset" }
+  /media/{mediaId}:
+    delete:
+      operationId: deleteMedia
+      tags: [media]
+      parameters:
+        - in: path
+          name: mediaId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Ok" }
+
+  /logs:
+    get:
+      operationId: listAuditLogs
+      tags: [logs]
+      parameters:
+        - in: query
+          name: campaignId
+          schema: { type: string }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 100 }
+      responses:
+        "200":
+          description: Audit log entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/AuditLog" }
+
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      responses:
+        "200":
+          description: Aggregated dashboard stats
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DashboardSummary" }
+
+  /dashboard/recent-activity:
+    get:
+      operationId: getRecentActivity
+      tags: [dashboard]
+      responses:
+        "200":
+          description: Recent publishing activity
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ActivityItem" }
+
+  /dashboard/platform-performance:
+    get:
+      operationId: getPlatformPerformance
+      tags: [dashboard]
+      description: Normalized cross-platform analytics
+      responses:
+        "200":
+          description: Platform performance breakdown
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/PlatformPerformance" }
+
+  /ai/generate-copy:
+    post:
+      operationId: generateAdCopy
+      tags: [ai]
+      description: AI-style ad copy generator with per-platform formatting
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/GenerateCopyRequest" }
+      responses:
+        "200":
+          description: Generated copy variants
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GenerateCopyResponse" }
+
+  /ai/best-time-to-post:
+    get:
+      operationId: getBestTimeToPost
+      tags: [ai]
+      parameters:
+        - in: query
+          name: platform
+          schema: { type: string }
+      responses:
+        "200":
+          description: Predicted best posting windows
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/BestTimeSlot" }
+
+  /ai/budget-suggestions:
+    post:
+      operationId: getBudgetSuggestions
+      tags: [ai]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BudgetSuggestionRequest" }
+      responses:
+        "200":
+          description: Suggested budget allocation across platforms
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/BudgetSuggestion" }
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status: { type: string }
+      required: [status]
+
+    Ok:
+      type: object
+      properties:
+        ok: { type: boolean }
+      required: [ok]
+
+    User:
+      type: object
+      properties:
+        id: { type: string }
+        email: { type: string }
+        name: { type: string }
+      required: [id, email, name]
+
+    LoginRequest:
+      type: object
+      properties:
+        email: { type: string }
+        password: { type: string }
+      required: [email, password]
+
+    AuthResponse:
+      type: object
+      properties:
+        token: { type: string }
+        user: { $ref: "#/components/schemas/User" }
+      required: [token, user]
+
+    PlatformCatalogEntry:
+      type: object
+      properties:
+        key: { type: string }
+        name: { type: string }
+        category: { type: string }
+        authType: { type: string, enum: [oauth, apikey] }
+        supportedCreatives:
+          type: array
+          items: { type: string, enum: [image, video, text, carousel] }
+        textLimit: { type: integer }
+        brandColor: { type: string }
+        connected: { type: boolean }
+      required: [key, name, category, authType, supportedCreatives, textLimit, brandColor, connected]
+
+    Platform:
+      type: object
+      properties:
+        id: { type: string }
+        key: { type: string }
+        name: { type: string }
+        accountLabel: { type: string }
+        status: { type: string, enum: [active, expired, error] }
+        connectedAt: { type: string, format: date-time }
+        lastSyncedAt: { type: string, format: date-time, nullable: true }
+        config:
+          type: object
+          additionalProperties: true
+      required: [id, key, name, accountLabel, status, connectedAt]
+
+    ConnectPlatformRequest:
+      type: object
+      properties:
+        key: { type: string }
+        accountLabel: { type: string }
+        apiKey: { type: string, nullable: true }
+        config:
+          type: object
+          additionalProperties: true
+      required: [key, accountLabel]
+
+    PlatformTestResult:
+      type: object
+      properties:
+        ok: { type: boolean }
+        latencyMs: { type: integer }
+        message: { type: string }
+      required: [ok, latencyMs, message]
+
+    Creative:
+      type: object
+      properties:
+        type: { type: string, enum: [image, video, text, carousel] }
+        headline: { type: string }
+        body: { type: string }
+        callToAction: { type: string, nullable: true }
+        mediaUrl: { type: string, nullable: true }
+        mediaId: { type: string, nullable: true }
+      required: [type, headline, body]
+
+    Campaign:
+      type: object
+      properties:
+        id: { type: string }
+        title: { type: string }
+        objective: { type: string, enum: [awareness, traffic, engagement, conversions, leads, app_installs] }
+        budget: { type: number }
+        currency: { type: string }
+        status: { type: string, enum: [draft, scheduled, publishing, live, partial, failed, paused] }
+        targetPlatforms:
+          type: array
+          items: { type: string }
+        scheduleStart: { type: string, format: date-time, nullable: true }
+        scheduleEnd: { type: string, format: date-time, nullable: true }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        creative: { $ref: "#/components/schemas/Creative" }
+      required: [id, title, objective, budget, currency, status, targetPlatforms, createdAt, updatedAt, creative]
+
+    CampaignDetail:
+      type: object
+      properties:
+        campaign: { $ref: "#/components/schemas/Campaign" }
+        jobs:
+          type: array
+          items: { $ref: "#/components/schemas/PublishJob" }
+        logs:
+          type: array
+          items: { $ref: "#/components/schemas/AuditLog" }
+      required: [campaign, jobs, logs]
+
+    CreateCampaignRequest:
+      type: object
+      properties:
+        title: { type: string }
+        objective: { type: string }
+        budget: { type: number }
+        currency: { type: string }
+        targetPlatforms:
+          type: array
+          items: { type: string }
+        scheduleStart: { type: string, format: date-time, nullable: true }
+        scheduleEnd: { type: string, format: date-time, nullable: true }
+        creative: { $ref: "#/components/schemas/Creative" }
+        publishImmediately: { type: boolean }
+      required: [title, objective, budget, currency, targetPlatforms, creative]
+
+    UpdateCampaignRequest:
+      type: object
+      properties:
+        title: { type: string }
+        objective: { type: string }
+        budget: { type: number }
+        currency: { type: string }
+        status: { type: string }
+        targetPlatforms:
+          type: array
+          items: { type: string }
+        scheduleStart: { type: string, format: date-time, nullable: true }
+        scheduleEnd: { type: string, format: date-time, nullable: true }
+        creative: { $ref: "#/components/schemas/Creative" }
+
+    PublishRequest:
+      type: object
+      properties:
+        campaignId: { type: string }
+        platforms:
+          type: array
+          items: { type: string }
+      required: [campaignId]
+
+    PublishResponse:
+      type: object
+      properties:
+        campaignId: { type: string }
+        jobs:
+          type: array
+          items: { $ref: "#/components/schemas/PublishJob" }
+      required: [campaignId, jobs]
+
+    PublishJob:
+      type: object
+      properties:
+        id: { type: string }
+        campaignId: { type: string }
+        platformKey: { type: string }
+        platformName: { type: string }
+        status: { type: string, enum: [pending, processing, success, failed, retrying] }
+        attempts: { type: integer }
+        externalId: { type: string, nullable: true }
+        externalUrl: { type: string, nullable: true }
+        error: { type: string, nullable: true }
+        response:
+          type: object
+          additionalProperties: true
+          nullable: true
+        impressions: { type: integer }
+        clicks: { type: integer }
+        spend: { type: number }
+        startedAt: { type: string, format: date-time, nullable: true }
+        completedAt: { type: string, format: date-time, nullable: true }
+        createdAt: { type: string, format: date-time }
+      required: [id, campaignId, platformKey, platformName, status, attempts, impressions, clicks, spend, createdAt]
+
+    MediaAsset:
+      type: object
+      properties:
+        id: { type: string }
+        type: { type: string, enum: [image, video] }
+        name: { type: string }
+        url: { type: string }
+        sizeBytes: { type: integer }
+        width: { type: integer, nullable: true }
+        height: { type: integer, nullable: true }
+        createdAt: { type: string, format: date-time }
+      required: [id, type, name, url, sizeBytes, createdAt]
+
+    CreateMediaRequest:
+      type: object
+      properties:
+        type: { type: string, enum: [image, video] }
+        name: { type: string }
+        url: { type: string }
+        sizeBytes: { type: integer }
+        width: { type: integer, nullable: true }
+        height: { type: integer, nullable: true }
+      required: [type, name, url]
+
+    AuditLog:
+      type: object
+      properties:
+        id: { type: string }
+        campaignId: { type: string, nullable: true }
+        platformKey: { type: string, nullable: true }
+        action: { type: string }
+        level: { type: string, enum: [info, warn, error] }
+        message: { type: string }
+        meta:
+          type: object
+          additionalProperties: true
+          nullable: true
+        createdAt: { type: string, format: date-time }
+      required: [id, action, level, message, createdAt]
+
+    DashboardSummary:
+      type: object
+      properties:
+        totalCampaigns: { type: integer }
+        liveCampaigns: { type: integer }
+        connectedPlatforms: { type: integer }
+        totalSpend: { type: number }
+        totalImpressions: { type: integer }
+        totalClicks: { type: integer }
+        avgCtr: { type: number }
+        successRate: { type: number }
+        statusBreakdown:
+          type: array
+          items:
+            type: object
+            properties:
+              status: { type: string }
+              count: { type: integer }
+            required: [status, count]
+      required: [totalCampaigns, liveCampaigns, connectedPlatforms, totalSpend, totalImpressions, totalClicks, avgCtr, successRate, statusBreakdown]
+
+    ActivityItem:
+      type: object
+      properties:
+        id: { type: string }
+        type: { type: string, enum: [publish, retry, connect, disconnect, create, error] }
+        title: { type: string }
+        description: { type: string }
+        platformKey: { type: string, nullable: true }
+        campaignId: { type: string, nullable: true }
+        createdAt: { type: string, format: date-time }
+      required: [id, type, title, description, createdAt]
+
+    PlatformPerformance:
+      type: object
+      properties:
+        platformKey: { type: string }
+        platformName: { type: string }
+        campaigns: { type: integer }
+        impressions: { type: integer }
+        clicks: { type: integer }
+        spend: { type: number }
+        ctr: { type: number }
+        cpc: { type: number }
+        successRate: { type: number }
+      required: [platformKey, platformName, campaigns, impressions, clicks, spend, ctr, cpc, successRate]
+
+    GenerateCopyRequest:
+      type: object
+      properties:
+        product: { type: string }
+        audience: { type: string }
+        tone: { type: string, enum: [bold, friendly, professional, playful, urgent] }
+        platforms:
+          type: array
+          items: { type: string }
+      required: [product, audience, tone, platforms]
+
+    GenerateCopyResponse:
+      type: object
+      properties:
+        variants:
+          type: array
+          items: { $ref: "#/components/schemas/CopyVariant" }
+      required: [variants]
+
+    CopyVariant:
+      type: object
+      properties:
+        platformKey: { type: string }
+        platformName: { type: string }
+        headline: { type: string }
+        body: { type: string }
+        callToAction: { type: string }
+        characterCount: { type: integer }
+        characterLimit: { type: integer }
+      required: [platformKey, platformName, headline, body, callToAction, characterCount, characterLimit]
+
+    BestTimeSlot:
+      type: object
+      properties:
+        platformKey: { type: string }
+        platformName: { type: string }
+        dayOfWeek: { type: string }
+        hour: { type: integer }
+        score: { type: number }
+        rationale: { type: string }
+      required: [platformKey, platformName, dayOfWeek, hour, score, rationale]
+
+    BudgetSuggestionRequest:
+      type: object
+      properties:
+        totalBudget: { type: number }
+        objective: { type: string }
+        platforms:
+          type: array
+          items: { type: string }
+      required: [totalBudget, objective, platforms]
+
+    BudgetSuggestion:
+      type: object
+      properties:
+        platformKey: { type: string }
+        platformName: { type: string }
+        suggestedBudget: { type: number }
+        sharePct: { type: number }
+        rationale: { type: string }
+      required: [platformKey, platformName, suggestedBudget, sharePct, rationale]

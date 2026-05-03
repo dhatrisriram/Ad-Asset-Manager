@@ -1,0 +1,25 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+    "baseUrl": ".",
+    "paths": {
+      "@workspace/db": ["../../lib/db/src/index.ts"],
+      "@workspace/db/*": ["../../lib/db/src/*"],
+      "@workspace/api-zod": ["../../lib/api-zod/src/index.ts"],
+      "@workspace/api-zod/*": ["../../lib/api-zod/src/*"]
+    },
+    "lib": ["es2022", "webworker"],
+    "types": ["@cloudflare/workers-types"]
+  },
+  "include": ["src"],
+  "references": [
+    {
+      "path": "../../lib/db"
+    },
+    {
+      "path": "../../lib/api-zod"
+    }
+  ]
+}
