@@ -2,7 +2,9 @@
 
 A single dashboard to connect 16 ad networks, draft creatives once, publish across them all, and track results in one place.
 
-Built for the Cloudflare internship assignment. Stack chosen for the free tier today, with a one-to-one mapping to Cloudflare primitives for production.
+Marketing teams juggling multiple ad networks end up re-doing the same campaign setup 16 times over and lose visibility across platforms. AdsHub unifies creation, publishing, and tracking into a single dashboard.
+
+Built on a free-tier stack today, with each component chosen to map 1:1 onto a production-grade managed service — no rewrite needed to scale.
 
 ## Tech Stack & Cloudflare Primitives
 
